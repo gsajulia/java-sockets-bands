@@ -6,6 +6,11 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.JSONArray;
+import java.util.ArrayList;
+import java.io.FileWriter;
+import org.json.simple.*;
 // import com.sun.imageio.plugins.common.InputStreamAdapter;
 
 public class BandsClient {
@@ -30,7 +35,8 @@ public class BandsClient {
         in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         
         String userOptionToServer, temp;
-        
+        ArrayList<Banda> list = null;
+
         userOptionToServer = read.readLine();
         debug("Sending '" + userOptionToServer + "'");
         out.print(userOptionToServer + "\r\n"); // send to server
@@ -38,7 +44,11 @@ public class BandsClient {
 
         String serverResponse = null;
         while ((serverResponse = in.readLine()) != null)
-            debug(serverResponse); // read from server and print it.
+            list = convertToListJson(serverResponse);
+        // debug(serverResponse);
+        
+        debug("Lista de músicas: " + list);
+        // list.forEach(System.out::println);
 
         out.close();
         in.close();
@@ -54,5 +64,35 @@ public class BandsClient {
     private static void debug(String msg)
     {
         System.out.println("Client: " + msg);
+    }
+
+    static ArrayList<Banda> convertToListJson(String response) {
+        ArrayList<Banda> list = new ArrayList<Banda>();
+        JSONObject jsonObject;
+        JSONParser jsonParser = new JSONParser();
+        JSONArray songs = new JSONArray();
+        JSONArray bands = new JSONArray();
+
+        try {
+            ArrayList<Musica> listsongs;
+            jsonObject = (JSONObject) jsonParser.parse(response);
+
+            bands = (JSONArray) jsonObject.get("bandas");
+            for (int i = 0; i < bands.size(); i++) {
+                listsongs = new ArrayList<Musica>();
+                JSONObject band = (JSONObject) bands.get(i);
+                songs = (JSONArray) band.get("musicas");
+                for (int j = 0; j < songs.size(); j++) {
+                    JSONObject song = (JSONObject) songs.get(j);
+                    listsongs.add(new Musica((String) song.get("nome"), (String) song.get("album")));
+                }
+                list.add(new Banda((String) band.get("nome"), listsongs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 }
