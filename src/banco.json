@@ -1,0 +1,26 @@
+{
+    "bandas": [
+        {
+            "musicas": [
+                {
+                    "album": "Fear of the dark",
+                    "nome": "Fear of the dark"
+                },
+                {
+                    "album": "Brave new world",
+                    "nome": "Blood Brothers"
+                }
+            ],
+            "nome": "Iron Maiden"
+        },
+        {
+            "musicas": [
+                {
+                    "album": "Metallica",
+                    "nome": "Nothing else matters"
+                }
+            ],
+            "nome": "Metallica"
+        }
+    ]
+}
