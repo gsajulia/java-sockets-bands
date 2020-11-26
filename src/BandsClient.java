@@ -66,14 +66,32 @@ public class BandsClient {
         debug("Sending '" + userOptionToServer + "'");
         out.print(response + "\r\n"); // send to server
         out.flush();
-
         String serverResponse = null;
-        while ((serverResponse = in.readLine()) != null)
-            list = convertToListJson(serverResponse);
-        // debug(serverResponse);
-        
-        debug("Lista de músicas: " + list);
-        // list.forEach(System.out::println);
+
+        //Showing server answer
+        switch(option) {
+            case 1:                      
+                while ((serverResponse = in.readLine()) != null)
+                    list = convertToListJson(serverResponse);
+                
+                debug("Lista de músicas: " + list);
+                break;
+            case 2:
+                while ((serverResponse = in.readLine()) != null)
+                    debug(serverResponse);
+                break;
+            case 3:
+                while ((serverResponse = in.readLine()) != null)
+                    debug(serverResponse);
+                break;
+            case 4:
+                while ((serverResponse = in.readLine()) != null)
+                    list = convertToListJson(serverResponse);
+            default:
+                out.print("Essa opção não foi encontrada.");
+                break;
+
+        }
 
         out.close();
         in.close();
