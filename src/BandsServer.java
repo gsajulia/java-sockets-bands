@@ -39,55 +39,60 @@ public class BandsServer {
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     
 
-                    String userOptionFromClient, temp;
-
+                    String userOptionFromClient, temp, data;
+                    Long option;
+                    Integer optionInt;
+                    boolean status;
 
                     userOptionFromClient = in.readLine(); // read the text from client
-                    debug("Read '" + userOptionFromClient + "'");
-                    String[] separetedOption = userOptionFromClient.split("-");
-                    debug("aaaa");
-                    for (String a : separetedOption) 
-                        System.out.println(a); 
-                    String action = separetedOption[0];
-                    String info = "";
-                    if(separetedOption.length > 1){
-                        info = separetedOption[1];
-                    } else {
-                        info = "";
+                    JSONObject jsonObject;
+                    JSONParser jsonParser = new JSONParser();
+                    jsonObject = (JSONObject) jsonParser.parse(userOptionFromClient);
+                    data = (String) jsonObject.get("data");
+                    option = (Long) jsonObject.get("options");
+
+                    System.out.println("A resposta é" + data + option); 
+                    
+                    optionInt = Integer.valueOf(option.toString());
+
+                    System.out.println(optionInt); 
+
+                    switch(optionInt) {
+                        case 1:                      
+                            jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
+                            String response;
+                            response = jsonObject.toJSONString();
+    
+                            System.out.println(response);
+                            out.print(response); // send the response to client
+                            break;
+                        case 2:
+                            status = deleteBand(data);
+
+                            if (status) {
+                                out.print("Deletado com sucesso!");
+                            } else {
+                                out.print("Não pode ser deletado!");
+                            }
+                            break;
+                        case 3:
+                            status = createBand(data);
+
+                            if (status) {
+                                out.print("Criado com sucesso!");
+                            } else {
+                                out.print("Não pode ser criado!");
+                            }
+                            break;
+                        case 4:
+                            String[] searchResponse = findBand(data);
+                            out.print(searchResponse);
+                            break;
+                        default:
+                            out.print("Essa opção não foi encontrada.");
+                            break;
+
                     }
-                    debug("aaaa");
-                    if(action.indexOf("1") != -1) {
-                        // ArrayList<Musica> response = band.getMusicas();
-                        //  System.out.println("A resposta é" + response); 
-                        JSONObject jsonObject;
-                        JSONParser jsonParser = new JSONParser();
-                        jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
-                        String response;
-                        response = jsonObject.toJSONString();
-
-                        System.out.println(response);
-                        out.print(response); // send the response to client
-                    } 
-                    // else if (action.indexOf("2") != -1) {
-                    //     boolean response = deleteBand(info);
-
-                    //     if (response) {
-                    //         out.print("Deletado com sucesso!");
-                    //     } else {
-                    //         out.print("Não pode ser deletado!");
-                    //     }
-                    // }  else if (action.indexOf("3") != -1) {
-                    //     boolean response = createBand(info);
-
-                    //     if (response) {
-                    //         out.print("Criado com sucesso!");
-                    //     } else {
-                    //         out.print("Não pode ser criado!");
-                    //     }
-                    // }  else if (action.indexOf("4") != -1) {
-                    //     String[] response = findBand(info);
-                    //     out.print(response);
-                    // }
                     
                     debug("Writing '" + userOptionFromClient + "'");
 
@@ -178,5 +183,24 @@ public class BandsServer {
             e.printStackTrace();
         }
 
+    }
+
+    private static boolean deleteBand(String info)
+    {
+        System.out.println("Deletando bandas com nome de" + info);
+        return true;
+    }
+
+    private static boolean createBand(String info)
+    {
+        System.out.println("Criando bandas com nome de" + info);
+        return true;
+    }
+
+    private static String[] findBand(String info)
+    {
+        System.out.println("Buscando bandas com nome de" + info);
+        String[] response = {"a"};
+        return response; 
     }
 }

@@ -29,17 +29,42 @@ public class BandsClient {
         {
         s = new Socket("localhost", 9090);
         debug("Connected\n");
-        System.out.println("Opcoes - Inserir o número desejado, o separador - e a string que deseja utilizar depois do separador\n\n Listar todos (1)\n Excluir (2-[banda])\n Adicionar Banda (3-[nome da banda]) \n Buscar (4-[nome da banda])");
+        
+        int option;
+        String userOptionToServer;
+        Scanner scanner = new Scanner(System.in);
+        ArrayList<Banda> list = null;
 
+        System.out.println("Opcoes\n\n 1 - Listar todos\n 2 - Excluir \n 3 -Adicionar Banda \n 4 - Buscar");
+        option = scanner.nextInt();
+
+        if(option == 2) {
+            System.out.println("Digite o nome da banda que deseja excluir:");
+        } else if (option == 3) {
+            System.out.println("Digite o nome da banda que deseja adicionar:");
+        }  else if (option == 4) {
+            System.out.println("Digite o nome da banda que deseja buscar:");
+        }
+        
+        
         out = new PrintWriter(s.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         
-        String userOptionToServer, temp;
-        ArrayList<Banda> list = null;
+        if(option != 1) {
+            userOptionToServer = read.readLine();
+        } else {
+            userOptionToServer = "";
+        }
+        
+        JSONObject jsOptions = new JSONObject();
+        jsOptions.put("options", option);
+        jsOptions.put("data", userOptionToServer);
+        String response;
+        response = jsOptions.toJSONString();
 
-        userOptionToServer = read.readLine();
+        debug("Mostrando options: " + jsOptions);
         debug("Sending '" + userOptionToServer + "'");
-        out.print(userOptionToServer + "\r\n"); // send to server
+        out.print(response + "\r\n"); // send to server
         out.flush();
 
         String serverResponse = null;
