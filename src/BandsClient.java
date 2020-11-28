@@ -16,96 +16,102 @@ import org.json.simple.*;
 public class BandsClient {
     public static void main(String[] args) throws IOException {
         // String serverAddress = JOptionPane.showInputDialog(
-        //                      "Enter IP Address of a machine that is\n" +
-        //                      "running the date service on port 9090:");
-
+        // "Enter IP Address of a machine that is\n" +
+        // "running the date service on port 9090:");
 
         // Socket s = new Socket(serverAddress, 9090);
         Socket s = null;
         PrintWriter out = null;
         BufferedReader in = null;
         BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
-        try
-        {
-        s = new Socket("localhost", 9090);
-        debug("Connected\n");
-        
-        int option;
-        String userOptionToServer;
-        Scanner scanner = new Scanner(System.in);
-        ArrayList<Banda> list = null;
+        try {
+            s = new Socket("localhost", 9090);
+            debug("Connected\n");
 
-        System.out.println("Opcoes\n\n 1 - Listar todos\n 2 - Excluir \n 3 -Adicionar Banda \n 4 - Buscar");
-        option = scanner.nextInt();
+            int option;
+            String userOptionToServer;
+            Scanner scanner = new Scanner(System.in);
+            ArrayList<Banda> list = null;
 
-        if(option == 2) {
-            System.out.println("Digite o nome da banda que deseja excluir:");
-        } else if (option == 3) {
-            System.out.println("Digite o nome da banda que deseja adicionar:");
-        }  else if (option == 4) {
-            System.out.println("Digite o nome da banda que deseja buscar:");
+            System.out.println("Opcoes\n\n 1 - Listar todos\n 2 - Excluir \n 3 -Adicionar Banda \n 4 - Buscar");
+            option = scanner.nextInt();
+
+            if (option == 2) {
+                System.out.println("Digite o nome da banda que deseja excluir:");
+            } else if (option == 3) {
+                System.out.println("Digite o nome da banda que deseja adicionar:");
+            } else if (option == 4) {
+                System.out.println("Digite o nome da banda que deseja buscar:");
+            }
+
+            out = new PrintWriter(s.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+
+            if (option != 1) {
+                userOptionToServer = read.readLine();
+            } else {
+                userOptionToServer = "";
+            }
+
+            JSONObject jsOptions = new JSONObject();
+            jsOptions.put("options", option);
+            jsOptions.put("data", userOptionToServer);
+            String response;
+            response = jsOptions.toJSONString();
+
+            debug("Mostrando options: " + jsOptions);
+            debug("Sending '" + userOptionToServer + "'");
+            out.print(response + "\r\n"); // send to server
+            out.flush();
+            String serverResponse = null;
+
+            // Showing server answer
+            switch (option) {
+                case 1:
+                    while ((serverResponse = in.readLine()) != null)
+                        list = convertToListJson(serverResponse);
+
+                    debug("Lista de músicas: ");
+                    list.forEach(System.out::println);
+
+                    break;
+                case 2:
+                    while ((serverResponse = in.readLine()) != null)
+                        debug(serverResponse);
+                    break;
+                case 3:
+                    while ((serverResponse = in.readLine()) != null)
+                        debug(serverResponse);
+                    break;
+                case 4:
+                    Banda band = new Banda();
+                    while ((serverResponse = in.readLine()) != null) {
+                        if (!serverResponse.equals("null")) {
+                            band = convertToListJsonBand(serverResponse);
+                            debug("Banda: ");
+                            System.out.println(band.toString());
+                        } else {
+                            System.out.println("Banda não encontrada.");
+                        }
+                    }
+                    break;
+                default:
+                    out.print("Essa opção não foi encontrada.");
+                    break;
+
+            }
+
+            out.close();
+            in.close();
+            read.close();
+            s.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        
-        
-        out = new PrintWriter(s.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        
-        if(option != 1) {
-            userOptionToServer = read.readLine();
-        } else {
-            userOptionToServer = "";
-        }
-        
-        JSONObject jsOptions = new JSONObject();
-        jsOptions.put("options", option);
-        jsOptions.put("data", userOptionToServer);
-        String response;
-        response = jsOptions.toJSONString();
-
-        debug("Mostrando options: " + jsOptions);
-        debug("Sending '" + userOptionToServer + "'");
-        out.print(response + "\r\n"); // send to server
-        out.flush();
-        String serverResponse = null;
-
-        //Showing server answer
-        switch(option) {
-            case 1:                      
-                while ((serverResponse = in.readLine()) != null)
-                    list = convertToListJson(serverResponse);
-                
-                debug("Lista de músicas: " + list);
-                break;
-            case 2:
-                while ((serverResponse = in.readLine()) != null)
-                    debug(serverResponse);
-                break;
-            case 3:
-                while ((serverResponse = in.readLine()) != null)
-                    debug(serverResponse);
-                break;
-            case 4:
-                while ((serverResponse = in.readLine()) != null)
-                    list = convertToListJson(serverResponse);
-            default:
-                out.print("Essa opção não foi encontrada.");
-                break;
-
-        }
-
-        out.close();
-        in.close();
-        read.close();
-        s.close();
-
-    }  catch (IOException e)
-    {
-        e.printStackTrace();
     }
-    }
 
-    private static void debug(String msg)
-    {
+    private static void debug(String msg) {
         System.out.println("Client: " + msg);
     }
 
@@ -137,5 +143,28 @@ public class BandsClient {
         }
 
         return list;
+    }
+
+    static Banda convertToListJsonBand(String response) {
+        Banda band = new Banda();
+        JSONObject jsonObject;
+        JSONParser jsonParser = new JSONParser();
+        JSONArray songs = new JSONArray();
+
+        try {
+            ArrayList<Musica> listsongs = new ArrayList<Musica>();
+            jsonObject = (JSONObject) jsonParser.parse(response);
+            songs = (JSONArray) jsonObject.get("musicas");
+            for (int j = 0; j < songs.size(); j++) {
+                JSONObject song = (JSONObject) songs.get(j);
+                listsongs.add(new Musica((String) song.get("nome"), (String) song.get("album")));
+            }
+            band = new Banda(jsonObject.get("nome").toString(), listsongs);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return band;
     }
 }

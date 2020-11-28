@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.List;
@@ -29,99 +30,93 @@ public class BandsServer {
         base = readJson();
 
         Banda band = new Banda();
-        
+
         try {
-            // while (true) {
+            while (true) {
                 Socket socket = listener.accept();
                 debug("Connected");
                 // try {
-                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                    String userOptionFromClient, temp, data;
-                    Long option;
-                    Integer optionInt;
-                    boolean status;
+                String userOptionFromClient, temp, data;
+                Long option;
+                Integer optionInt;
+                boolean status;
 
-                    userOptionFromClient = in.readLine(); // read the text from client
-                    JSONObject jsonObject;
-                    JSONParser jsonParser = new JSONParser();
-                    jsonObject = (JSONObject) jsonParser.parse(userOptionFromClient);
-                    data = (String) jsonObject.get("data");
-                    option = (Long) jsonObject.get("options");
+                userOptionFromClient = in.readLine(); // read the text from client
+                JSONObject jsonObject;
+                JSONParser jsonParser = new JSONParser();
+                jsonObject = (JSONObject) jsonParser.parse(userOptionFromClient);
+                data = (String) jsonObject.get("data");
+                option = (Long) jsonObject.get("options");
 
-                    System.out.println("A resposta é" + data + option); 
-                    
-                    optionInt = Integer.valueOf(option.toString());
+                System.out.println("A resposta é" + data + option);
 
-                    System.out.println(optionInt); 
+                optionInt = Integer.valueOf(option.toString());
 
-                    switch(optionInt) {
-                        case 1:                      
-                            jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
-                            String response;
-                            response = jsonObject.toJSONString();
-    
-                            System.out.println(response);
-                            out.print(response); // send the response to client
-                            break;
-                        case 2:
-                            status = deleteBand(data);
+                System.out.println(optionInt);
 
-                            if (status) {
-                                out.print("Deletado com sucesso!");
-                            } else {
-                                out.print("Não pode ser deletado!");
-                            }
-                            break;
-                        case 3:
-                            status = createBand(data);
+                switch (optionInt) {
+                    case 1:
+                        jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
+                        String response;
+                        response = jsonObject.toJSONString();
 
-                            if (status) {
-                                out.print("Criado com sucesso!");
-                            } else {
-                                out.print("Não pode ser criado!");
-                            }
-                            break;
-                        case 4:
-                            String[] searchResponse = findBand(data);
-                            out.print(searchResponse);
-                            break;
-                        default:
-                            out.print("Essa opção não foi encontrada.");
-                            break;
+                        System.out.println(response);
+                        out.print(response); // send the response to client
+                        break;
+                    case 2:
+                        status = deleteBand(data, base);
 
-                    }
-                    
-                    debug("Writing '" + userOptionFromClient + "'");
+                        if (status) {
+                            out.print("Deletado com sucesso!");
+                        } else {
+                            out.print("Não pode ser deletado!");
+                        }
+                        break;
+                    case 3:
+                        status = createBand(data, base);
 
-                    temp = "funcionou, string: " + userOptionFromClient; 
+                        if (status) {
+                            out.print("Criado com sucesso!");
+                        } else {
+                            out.print("Não pode ser criado!");
+                        }
+                        break;
+                    case 4:
+                        String searchResponse = findBand(data, base);
+                        System.out.println(searchResponse);
+                        out.print(searchResponse);
+                        break;
+                    default:
+                        out.print("Essa opção não foi encontrada.");
+                        break;
 
-                    // out.print(temp); // send the response to client
+                }
 
-                    out.flush();
-                    out.close();
-                    in.close();
+                debug("Writing '" + userOptionFromClient + "'");
 
-                    socket.close();
+                temp = "funcionou, string: " + userOptionFromClient;
 
-                // } finally {
-                //     socket.close();
-                // }
+                // out.print(temp); // send the response to client
+
+                out.flush();
+                out.close();
+                in.close();
+
+                // socket.close();
+
+            }
             // }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             listener.close();
         }
     }
 
-    private static void debug(String msg)
-    {
+    private static void debug(String msg) {
         System.out.println("Server: " + msg);
     }
 
@@ -135,8 +130,12 @@ public class BandsServer {
         try {
             ArrayList<Musica> listsongs;
 
-            jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
-            bands = (JSONArray) jsonObject.get("bandas");
+            try {
+                jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
+                bands = (JSONArray) jsonObject.get("bandas");
+            } catch (Exception e) {
+                FileWriter file = new FileWriter("src/banco.json");
+            }
 
             for (int i = 0; i < bands.size(); i++) {
                 listsongs = new ArrayList<Musica>();
@@ -160,13 +159,21 @@ public class BandsServer {
         Banda band;
         JSONObject obj = new JSONObject();
         JSONArray jsBands = new JSONArray();
+        try {
+            File f = new File("src/banco.json");
+            if (f.exists()) {
+                f.delete();
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+        }
 
-        for(int i = 0; i < list.size(); i++){
+        for (int i = 0; i < list.size(); i++) {
             JSONObject jsBand = new JSONObject();
             JSONArray jsSongs = new JSONArray();
             band = list.get(i);
             jsBand.put("nome", band.getNome());
-            for(int j = 0; j < band.getMusicas().size(); j++){
+            for (int j = 0; j < band.getMusicas().size(); j++) {
                 JSONObject jsSong = new JSONObject();
                 jsSong.put("nome", band.getMusicas().get(j).getNome());
                 jsSong.put("album", band.getMusicas().get(j).getAlbum());
@@ -185,22 +192,51 @@ public class BandsServer {
 
     }
 
-    private static boolean deleteBand(String info)
-    {
-        System.out.println("Deletando bandas com nome de" + info);
+    private static boolean deleteBand(String info, ArrayList<Banda> lista) {
+
+        System.out.println("Deletando bandas com nome de: " + info);
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getNome().equals(info)) {
+                lista.remove(i);
+            }
+        }
+        writeJson(lista);
         return true;
     }
 
-    private static boolean createBand(String info)
-    {
+    private static boolean createBand(String info, ArrayList<Banda> lista) {
         System.out.println("Criando bandas com nome de" + info);
+        lista.add(new Banda(info, new ArrayList<Musica>()));
+        writeJson(lista);
         return true;
     }
 
-    private static String[] findBand(String info)
-    {
+    private static String findBand(String info, ArrayList<Banda> lista) {
         System.out.println("Buscando bandas com nome de" + info);
-        String[] response = {"a"};
-        return response; 
+        Banda band = null;
+        String response = "";
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getNome().equals(info)) {
+                band = lista.get(i);
+            }
+        }
+
+        if(band != null){  
+            JSONObject jsBand = new JSONObject();
+            JSONArray jsSongs = new JSONArray();
+            jsBand.put("nome", band.getNome());
+            for (int j = 0; j < band.getMusicas().size(); j++) {
+                JSONObject jsSong = new JSONObject();
+                jsSong.put("nome", band.getMusicas().get(j).getNome());
+                jsSong.put("album", band.getMusicas().get(j).getAlbum());
+                jsSongs.add(jsSong);
+            }
+            jsBand.put("musicas", jsSongs);
+            response = jsBand.toJSONString();
+        }else{
+            response = "null";
+        }
+
+        return response;
     }
 }
