@@ -11,7 +11,6 @@ import org.json.simple.JSONArray;
 import java.util.ArrayList;
 import java.io.FileWriter;
 import org.json.simple.*;
-// import com.sun.imageio.plugins.common.InputStreamAdapter;
 
 public class BandsClient {
     public static void main(String[] args) throws IOException {
@@ -19,7 +18,6 @@ public class BandsClient {
         // "Enter IP Address of a machine that is\n" +
         // "running the date service on port 9090:");
 
-        // Socket s = new Socket(serverAddress, 9090);
         Socket s = null;
         PrintWriter out = null;
         BufferedReader in = null;
@@ -33,7 +31,7 @@ public class BandsClient {
             Scanner scanner = new Scanner(System.in);
             ArrayList<Banda> list = null;
 
-            System.out.println("Opcoes\n\n 1 - Listar todos\n 2 - Excluir \n 3 -Adicionar Banda \n 4 - Buscar");
+            System.out.println("Opcoes\n\n 1 - Listar todos\n 2 - Excluir \n 3 - Adicionar Banda \n 4 - Buscar");
             option = scanner.nextInt();
 
             if (option == 2) {
@@ -44,8 +42,8 @@ public class BandsClient {
                 System.out.println("Digite o nome da banda que deseja buscar:");
             }
 
-            out = new PrintWriter(s.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            out = new PrintWriter(s.getOutputStream(), true); //send
+            in = new BufferedReader(new InputStreamReader(s.getInputStream())); //receive
 
             if (option != 1) {
                 userOptionToServer = read.readLine();
@@ -53,7 +51,7 @@ public class BandsClient {
                 userOptionToServer = "";
             }
 
-            JSONObject jsOptions = new JSONObject();
+            JSONObject jsOptions = new JSONObject(); //options that will be sent to the server
             jsOptions.put("options", option);
             jsOptions.put("data", userOptionToServer);
             String response;
@@ -65,7 +63,7 @@ public class BandsClient {
             out.flush();
             String serverResponse = null;
 
-            // Showing server answer
+            // Showing the answer received from the server
             switch (option) {
                 case 1:
                     while ((serverResponse = in.readLine()) != null)

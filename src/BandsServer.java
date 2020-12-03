@@ -35,9 +35,9 @@ public class BandsServer {
             while (true) {
                 Socket socket = listener.accept();
                 debug("Connected");
-                // try {
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true); //send
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); //receive
 
                 String userOptionFromClient, temp, data;
                 Long option;
@@ -57,6 +57,8 @@ public class BandsServer {
 
                 System.out.println(optionInt);
 
+                
+                //responses that will be sent to the client depending on the option he chose
                 switch (optionInt) {
                     case 1:
                         jsonObject = (JSONObject) jsonParser.parse(new FileReader("src/banco.json"));
@@ -99,16 +101,14 @@ public class BandsServer {
 
                 temp = "funcionou, string: " + userOptionFromClient;
 
-                // out.print(temp); // send the response to client
 
                 out.flush();
                 out.close();
                 in.close();
 
-                // socket.close();
+                socket.close();
 
             }
-            // }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
